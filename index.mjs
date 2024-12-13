@@ -142,6 +142,7 @@ async function poll () {
 				console.log("cant find Board");
 				
 				resolve();
+				return;
 			}
 
 			const {username /*pinterest username*/, boardId, pins} = getBoardsResult;
