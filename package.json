@@ -1,0 +1,40 @@
+{
+  "name": "for-fun",
+  "version": "1.0.0",
+  "description": "this project is for telegram gallary",
+  "main": "index.js",
+  "scripts": {
+    "test": "mocha",
+    "start": "nodemon index.mjs"
+  },
+  "keywords": [
+    "for",
+    "fun"
+  ],
+  "author": "Amirreza",
+  "license": "ISC",
+  "dependencies": {
+    "@googleapis/youtube": "^20.0.0",
+    "@pengoose/pinterest": "^1.0.3",
+    "axios": "^1.7.9",
+    "crawler": "^2.0.2",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.1",
+    "https-proxy-agent": "^7.0.5",
+    "mongodb": "^6.11.0",
+    "node-global-proxy": "^1.0.1",
+    "node-telegram-bot-api": "^0.66.0",
+    "puppeteer": "^23.10.1",
+    "puppeteer-core": "^23.10.1",
+    "sqlite3": "^5.1.7",
+    "telenode-js": "^1.5.2",
+    "youtube-playlist": "^1.0.4",
+    "ytdl-core": "^4.11.5"
+  },
+  "devDependencies": {
+    "@faker-js/faker": "^9.3.0",
+    "chai": "^5.1.2",
+    "cross-env": "^7.0.3",
+    "mocha": "^11.0.1"
+  }
+}
