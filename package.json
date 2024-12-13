@@ -5,7 +5,9 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
+    "hotReload": "nodemon index.mjs",
     "start": "nodemon index.mjs"
+
   },
   "keywords": [
     "for",
@@ -24,7 +26,6 @@
     "mongodb": "^6.11.0",
     "node-global-proxy": "^1.0.1",
     "node-telegram-bot-api": "^0.66.0",
-    "puppeteer": "^23.10.1",
     "puppeteer-core": "^23.10.1",
     "sqlite3": "^5.1.7",
     "telenode-js": "^1.5.2",
@@ -33,7 +34,6 @@
   },
   "devDependencies": {
     "@faker-js/faker": "^9.3.0",
-    "chai": "^5.1.2",
     "cross-env": "^7.0.3",
     "mocha": "^11.0.1"
   }
