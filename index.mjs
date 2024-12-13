@@ -134,7 +134,7 @@ async function poll () {
 
 		const temp = new Promise(async (resolve, reject) => {
 
-			const {channelAdminId, chatId}  = channel;
+			const {channelAdminId, username, chatId}  = channel;
 
 			const getBoardsResult = await db.getBoardByAdminId(channelAdminId);
 
@@ -145,7 +145,7 @@ async function poll () {
 				return;
 			}
 
-			const {username /*pinterest username*/, boardId, pins} = getBoardsResult;
+			const {boardId, pins} = getBoardsResult;
 	
 			const responsePinList = await pinterest.getPinListByBoardId(boardId);
 			const dataBasePinList = pins;
@@ -170,11 +170,11 @@ async function poll () {
 					console.error("cant download photo from pinterest", error);
 				}
 				
-	
+				https://uk.pinterest.com/pin/308355905754983027/
 				try {
-					await bot.sendPhoto(chatId, pin_Path);
+					await bot.sendPhoto(chatId, pin_Path, {caption:`[📌Pinterest](https://pinterest.com/pin/${notDownloadedPin}`, parse_mode:"Markdown"});
 					// add not downloaded pin to Downloaded list
-					db.putPinId(channelAdminId, username, boardId, [notDownloadedPin]); 
+					db.putPinId(channelAdminId, boardId, [notDownloadedPin]); 
 				} catch (error) {
 					console.error("cant upload photo to telegram", error);
 				}

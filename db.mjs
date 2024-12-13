@@ -46,24 +46,17 @@ async function deleteChannelId(chatId) {
 }
 
 //TODO: separate tow function 1. add pin 2. add board
-async function putPinId(channelAdminId, username, boardId, pins) {
+async function putPinId(channelAdminId,boardId, pins) {
     if (!channelAdminId) {
         throw "chat id not found";
-        
     }
 
     if (!pins) {
         throw "pins not found";
-        
     }
 
     const collection = _db.collection("pinIdList");
 
-    const data = await collection.findOne({channelAdminId});
-
-    if (data == null) {
-        const insertResult = await collection.insertOne({channelAdminId, username, boardId, pins})
-    }
 
     const filter = {
         channelAdminId,
@@ -88,10 +81,15 @@ async function putPinId(channelAdminId, username, boardId, pins) {
 async function setBoardId(channelAdminId, username, boardId) {
     const collection = _db.collection("pinIdList");
 
-    //delete old board for this chat id
-    await collection.deleteMany({channelAdminId});
+    const data = await collection.findOne({channelAdminId});
 
-    putPinId(channelAdminId, username, boardId, [/*empty pins*/])
+    // if not exist a pinList create it
+    if (data == null) {
+        const insertResult = await collection.insertOne({channelAdminId, username, boardId, pins:[]})
+        return;
+    }
+
+    await collection.updateOne({channelAdminId}, {$set: {boardId, username}});
 }
 
 async function IsPinIdExist(channelAdminId, pinIds){
