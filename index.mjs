@@ -136,7 +136,15 @@ async function poll () {
 
 			const {channelAdminId, chatId}  = channel;
 
-			const {username /*pinterest username*/, boardId, pins} = await db.getBoardByAdminId(channelAdminId);
+			const getBoardsResult = await db.getBoardByAdminId(channelAdminId);
+
+			if(getBoardsResult == null){
+				console.log("cant find Board");
+				
+				resolve();
+			}
+
+			const {username /*pinterest username*/, boardId, pins} = getBoardsResult;
 	
 			const responsePinList = await pinterest.getPinListByBoardId(boardId);
 			const dataBasePinList = pins;
