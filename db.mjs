@@ -1,14 +1,19 @@
 import { Db, MongoClient } from "mongodb";
+import dotenv from "dotenv"
 
-const conString = "mongodb://localhost:27017"
+
+dotenv.config();
+
+
+const conString = process.env.MONGODB_URI
 
 const client = new MongoClient(conString);
 
 await client.connect();
 
-let _db = client.db("telegram_bot");
+let _db = client.db(process.env.MONGODB_NAME);
 
-async function initDb(dbName = "telegram_bot") {
+async function initDb(dbName) {
     _db =  client.db(dbName);
 }
 
@@ -123,6 +128,60 @@ async function getPins(channelAdminId) {
     return pinIdList;
 }
 
+async function setPlayList(channelAdminId, playlistId) {
+    const collection = _db.collection("playList");
+    const data = await collection.findOne({playlistId});
+
+    // if not exist a pinList create it
+    if (data == null) {
+        const insertResult = await collection.insertOne({channelAdminId, playlistId, videoIds:[]})
+        return;
+    }
+
+    await collection.updateOne({channelAdminId}, {$set: {playlistId}});
+}
+
+async function getPlayListByAdminId(channelAdminId) {
+    const collection = _db.collection("playList");
+    const result = await collection.findOne({channelAdminId})
+    
+    return result;
+    
+}
+
+async function putVideoId(channelAdminId,playlistId, videoIds) {
+    if (!channelAdminId) {
+        throw "chat id not found";
+    }
+
+    if (!videoIds) {
+        throw "videoIds not found";
+    }
+
+    const collection = _db.collection("playList");
+
+
+    const filter = {
+        channelAdminId,
+        playlistId
+    }
+
+    const update = {
+        $addToSet:{
+            videoIds: {
+                $each:videoIds
+            }
+        }
+    }
+
+    try {
+        await collection.updateOne(filter, update)
+    } catch (error) {
+        console.error(error);
+    }
+}
+
+
 const db = {
     initDb,
     addChannel,
@@ -134,7 +193,10 @@ const db = {
     setBoardId,
     getBoardIds,
     getPins,
-    getBoardByAdminId
+    getBoardByAdminId,
+    setPlayList,
+    getPlayListByAdminId,
+    putVideoId
 }
 
 export default db;

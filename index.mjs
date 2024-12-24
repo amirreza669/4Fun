@@ -1,23 +1,15 @@
 // import Crawler from "crawler";
 import TelegramBot from "node-telegram-bot-api";
 import db from "./db.mjs";
-import { faker } from '@faker-js/faker';
-import axios, { all } from "axios";
-import { getPlaylistItems } from "./youtubeApi.mjs";
-import ytdl from 'ytdl-core';
+import youtube from "./youtubeApi.mjs";
 import fs from "fs";
-import { spawn } from "child_process";
+import dotenv from "dotenv"
 import pinterest from "./Pinterest.mjs";
-import { ChangeStream } from "mongodb";
-import { resolve } from "path";
-import { promises } from "dns";
 
+dotenv.config();
 
-// Replace 'YOUR_API_TOKEN' with the token you got from BotFather
-const token = "7750721310:AAGOhlZCDjbbkkbBD2x8vcqkaME0FB_xeiA"; // telegram token
-const administrator_Username = "amirrezadev"
-const playlistId = 'PL1COQt23iaay_amY3yhRxS5od1ElhLDWM'; // Replace with the YouTube playlist ID
-const pintrest_key = 'pina_AMARABYXAD7L4AIAGDAFMCSVRMG2FEYBQBIQCDM6PDR7VDPT6PWX6GB47TDKPFDCK5BOUHMFGST3SI2B55Y7R5UQ7RUWIWQA'
+const token = process.env.TELEGRAM_BOT_TOKEN;
+const administrator_Username = process.env.TELEGRAM_ADMIN_ID
 
 
 
@@ -59,7 +51,7 @@ bot.on("message", async (message)=>{
 
 
 	if (username == administrator_Username) {
-		//process command
+		//process command.
 		switch (text) {
 			case "/start":
 				bot.sendMessage(chatId,"Hello Boss");
@@ -67,6 +59,10 @@ bot.on("message", async (message)=>{
 			case "/set_board":
 				bot.sendMessage(chatId,"wait for Pinterest Board ID \n Format: [Username] [BoardId]");
 				botMemory[chatId] = "GetBoardID";
+				break
+			case "/set_playlist":
+				bot.sendMessage(chatId,"wait for YouTube PlayList ID \n Format: [PlayList]");
+				botMemory[chatId] = "GetPlayListID";
 				break
 		
 			default:
@@ -81,11 +77,17 @@ bot.on("message", async (message)=>{
 							console.log(text);
 							botMemory[chatId] = null;
 							break;
+						case "GetPlayListID":
+							// TODO : validate playlist Id
+							const playListId = text
+							db.setPlayList(chatId,playListId);
+							console.log(text);
+							botMemory[chatId] = null;
+							break;
+					}else {
+						botMemory[chatId] = null;
+						bot.sendMessage(chatId, "undefined Command");
 					}
-				else {
-					botMemory[chatId] = null;
-					bot.sendMessage(chatId, "undefined Command");
-				}
 					
 				break; // end of command switch
 		}
@@ -103,18 +105,6 @@ bot.on('polling_error', (error) => {
 console.log("Bot is running...");
 
 
-async function youTube_dl(video_id) {
-  const child = spawn('youtube-dl.exe', [video_id]);
-
-  child.stdout.on('data', (data)=> console.log(data.toString('utf-8')));
-  child.stderr.on('data',  (data)=> console.log(data.toString('utf-8')));
-
-  child.on('exit',()=>{
-    if (index) {
-      dl(videoIdList[index--])
-    }
-  })
-}
 
 async function poll () {
 
@@ -132,9 +122,10 @@ async function poll () {
 	
 	allChannelId.forEach(channel => {
 
-		const temp = new Promise(async (resolve, reject) => {
+		const {channelAdminId, username, chatId}  = channel;
 
-			const {channelAdminId, username, chatId}  = channel;
+
+		const pinterestTreadHolder = new Promise(async (resolve, reject) => {
 
 			const getBoardsResult = await db.getBoardByAdminId(channelAdminId);
 
@@ -184,7 +175,66 @@ async function poll () {
 		});
 
 		// add new Promise
-		promises.push(temp);
+		promises.push(pinterestTreadHolder);
+
+		// for youtube
+		
+		const youTubeTreadHolder = new Promise(async (resolve, reject) => {
+			
+			const getPlayListResult = await db.getPlayListByAdminId(channelAdminId);
+
+			if(getPlayListResult == null){
+				console.log("cant find PlayList");
+				
+				resolve();
+				return;
+			}
+
+			const {playlistId, videoIds} = getPlayListResult;
+	
+			const responseList = await youtube.getPlaylistItems(playlistId);
+			const dataBaseList = videoIds;
+	
+			const notDownloadedVideos = responseList.filter(value => !dataBaseList.includes(value));
+			
+			if(notDownloadedVideos.length > 0)
+				console.log("detect a new not downloaded pin");
+			else	
+				resolve(); // not need to continue
+			
+			for (let index = 0; index < notDownloadedVideos.length; index++) {
+	
+				const notDownloadedVideo = notDownloadedVideos[index];
+
+				const youTube_dl_result = await youtube.youTube_dl(notDownloadedVideo, chatId);
+				
+				// if (!youTube_dl_result) {
+				// 	console.log("cant download music ignore this video");
+				// 	await db.putVideoId(channelAdminId, playlistId, [notDownloadedVideo]);	
+				// }
+
+				const path = await youtube.findFileByIdRecursive(notDownloadedVideo, chatId);
+
+				try {
+					if (path != null) {
+
+						const readStream = fs.createReadStream(path);
+						
+						await bot.sendAudio(chatId, readStream);
+						await db.putVideoId(channelAdminId, playlistId, [notDownloadedVideo]);	
+					} else {
+						console.log("don't find music");
+					}
+				} catch (error) {
+					console.error('cant upload music');
+				}
+			}
+
+			resolve();
+		});
+
+		// add new Promise
+		promises.push(youTubeTreadHolder);
 
 	});
 	
@@ -204,23 +254,10 @@ async function StartCheckBoards(interval) {
 
 			}).finally(()=>{
 				lock = false;
-			}).catch(() => {throw("error in polling")})
+			}).catch(() => { throw("error in polling") })
 			console.log("poll");
-			
-		
-	}, interval);
 
-	
+	}, interval);
 }
 
 StartCheckBoards(10000)
-
-// const pinIds = await getPinListId('special');
-// for (let index = 0; index < pinIds.length; index++) {
-// 	const pinAddress = await getPhotoAddress(pinIds[index], 'special');
-// 	downloadImage(pinAddress, `./pins_Download/${pinIds[index]}.png`)
-// }
-
-// const channels = await db.getAllChannelId();
-
-// bot.sendPhoto(channels[0].chatId,"./pins_Download/744993963392567534.png")

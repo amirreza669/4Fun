@@ -1,7 +1,14 @@
 
 import { youtube } from "@googleapis/youtube";
+import fs from "fs";
+import path from "path";
+import {spawn} from 'child_process'
+import dotenv from "dotenv"
 
-const API_KEY = 'AIzaSyDcgOMHrT8GCP37X2zdxPZLmacBV6IS5yg'; // youtube
+dotenv.config();
+
+const API_KEY = process.env.YOUTUBE_API_KEY // youtube
+const music_dir = './music_Download'
 
 const YouTube = youtube({version:'v3', auth:API_KEY})
 
@@ -16,7 +23,6 @@ async function getPlaylistItems(playlistId) {
       const items = response.data.items;
       let videoIdList=[]
   
-      console.log(`Found ${items.length} items in the playlist:`);
       items.forEach((item, index) => {
         videoIdList.push(item.snippet.resourceId.videoId)
       });
@@ -27,6 +33,44 @@ async function getPlaylistItems(playlistId) {
     }
 }
 
-export {
-    getPlaylistItems
+function youTube_dl(video_id, chatId) {
+
+  return new Promise((resolve)=>{
+    const child = spawn('yt-dlp.exe', [video_id , '-x', '-P', music_dir, '--audio-format', 'mp3', '-o', `%(title)s [%(id)s] [${chatId}].%(ext)s`]);
+
+    child.stdout.on('data', (data) => console.log(data.toString('utf-8')));
+    child.stderr.on('data', (data) => console.error(data.toString('utf-8')));
+    
+    child.on('close', (code) => {
+      if (code != 0) 
+        resolve(false);
+      else
+        resolve(true);
+    });
+
+  })
+
+}
+
+async function findFileByIdRecursive(id, chatId) {
+  let result = null; // Variable to store the file path
+  const files = fs.readdirSync(music_dir); // Read all items in the directory
+
+  for (const file of files) {
+      const fullPath = path.join(music_dir, file);
+
+      if (file.includes(id) && file.includes(chatId.toString())) {
+          // If the file contains the ID, return its path
+          result = fullPath;
+          break;
+      }
+  }
+
+  return result;
+}
+
+export default {
+    getPlaylistItems,
+    youTube_dl,
+    findFileByIdRecursive
 }

@@ -7,7 +7,6 @@
     "test": "mocha",
     "hotReload": "nodemon index.mjs",
     "start": "node index.mjs"
-
   },
   "keywords": [
     "for",
@@ -27,6 +26,7 @@
     "node-global-proxy": "^1.0.1",
     "node-telegram-bot-api": "^0.66.0",
     "puppeteer-core": "^23.10.1",
+    "spotifydl-core": "^0.2.0",
     "sqlite3": "^5.1.7",
     "telenode-js": "^1.5.2",
     "youtube-playlist": "^1.0.4",
