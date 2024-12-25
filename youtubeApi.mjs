@@ -36,7 +36,7 @@ async function getPlaylistItems(playlistId) {
 function youTube_dl(video_id, chatId) {
 
   return new Promise((resolve)=>{
-    const child = spawn('yt-dlp.exe', [video_id , '-x', '-P', music_dir, '--audio-format', 'mp3', '-o', `%(title)s [%(id)s] [${chatId}].%(ext)s`]);
+    const child = spawn('yt-dlp', [video_id , '-x', '-P', music_dir, '--audio-format', 'mp3', '-o', `%(title)s [%(id)s] [${chatId}].%(ext)s`]);
 
     child.stdout.on('data', (data) => console.log(data.toString('utf-8')));
     child.stderr.on('data', (data) => console.error(data.toString('utf-8')));
