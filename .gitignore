@@ -6,3 +6,7 @@ ffprobe.exe
 yt-dlp.exe
 *.mp3
 .env
+cookies.txt
+*.webm
+*.db
+package-lock.json

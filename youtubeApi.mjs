@@ -8,6 +8,16 @@ import dotenv from "dotenv"
 dotenv.config();
 
 const API_KEY = process.env.YOUTUBE_API_KEY // youtube
+const COOKIES_PATH = process.env. COOKIES_FILE_PATH // youtube requir
+
+if (!API_KEY) {
+   throw new Error("YOUTUBE_API_KEY needed");
+}
+
+if (!COOKIES_PATH) {
+  throw new Error("COOKIES_FILE_PATH needed");
+}
+
 const music_dir = './music_Download'
 
 const YouTube = youtube({version:'v3', auth:API_KEY})
@@ -36,7 +46,7 @@ async function getPlaylistItems(playlistId) {
 function youTube_dl(video_id, chatId) {
 
   return new Promise((resolve)=>{
-    const child = spawn('yt-dlp', [video_id , '-x', '-P', music_dir, '--audio-format', 'mp3', '-o', `%(title)s [%(id)s] [${chatId}].%(ext)s`]);
+    const child = spawn('yt-dlp', [video_id , '-x', '-P', music_dir, '--audio-format', 'mp3', '-o', `%(title)s [%(id)s] [${chatId}].%(ext)s`, '--js-runtimes','node', '--cookies', 'cookies.txt']);
 
     child.stdout.on('data', (data) => console.log(data.toString('utf-8')));
     child.stderr.on('data', (data) => console.error(data.toString('utf-8')));
@@ -68,6 +78,7 @@ async function findFileByIdRecursive(id, chatId) {
 
   return result;
 }
+
 
 export default {
     getPlaylistItems,
